@@ -1,0 +1,17 @@
+<?php
+
+/************************************************************************************************************************************
+ *
+ * wbTeamProTheme plugin for MantisBT
+ * 2013 - David Hunt, Webuddha.com
+ *
+ ************************************************************************************************************************************/
+
+// Plugin
+
+  $s_plugin_wbquickreport_title = 'Bug Reporting Tools';
+  $s_plugin_wbquickreport_description = 'Tools to improve speed of batch bug reporting.';
+  $s_plugin_wbquickreport_header_config = 'Configuration';
+
+// Core
+
