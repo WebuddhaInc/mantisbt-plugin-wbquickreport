@@ -40,6 +40,7 @@
   $f_master_bug_id = gpc_get_int( 'm_id', 0 );
 
   if ( $f_master_bug_id > 0 ) {
+
     # master bug exists...
     bug_ensure_exists( $f_master_bug_id );
 
@@ -48,7 +49,6 @@
       error_parameters( $f_master_bug_id );
       trigger_error( ERROR_BUG_READ_ONLY_ACTION_DENIED, ERROR );
     }
-
     $t_bug = bug_get( $f_master_bug_id, true );
 
     # the user can at least update the master bug (needed to add the relationship)...
@@ -57,137 +57,121 @@
     #@@@ (thraxisp) Note that the master bug is cloned into the same project as the master, independent of
     #       what the current project is set to.
     if( $t_bug->project_id != helper_get_current_project() ) {
-            # in case the current project is not the same project of the bug we are viewing...
-            # ... override the current project. This to avoid problems with categories and handlers lists etc.
-            $g_project_override = $t_bug->project_id;
-            $t_changed_project = true;
-        } else {
-            $t_changed_project = false;
-        }
+      # in case the current project is not the same project of the bug we are viewing...
+      # ... override the current project. This to avoid problems with categories and handlers lists etc.
+      $g_project_override = $t_bug->project_id;
+      $t_changed_project = true;
+    } else {
+        $t_changed_project = false;
+    }
+    access_ensure_project_level( config_get( 'report_bug_threshold' ) );
 
-      access_ensure_project_level( config_get( 'report_bug_threshold' ) );
-
-    $f_build        = $t_bug->build;
-    $f_platform       = $t_bug->platform;
-    $f_os         = $t_bug->os;
-    $f_os_build       = $t_bug->os_build;
+    $f_build              = $t_bug->build;
+    $f_platform           = $t_bug->platform;
+    $f_os                 = $t_bug->os;
+    $f_os_build           = $t_bug->os_build;
     $f_product_version    = $t_bug->version;
-    $f_target_version   = $t_bug->target_version;
-    $f_profile_id     = 0;
-    $f_handler_id     = $t_bug->handler_id;
-
-    $f_category_id      = $t_bug->category_id;
+    $f_target_version     = $t_bug->target_version;
+    $f_profile_id         = 0;
+    $f_handler_id         = $t_bug->handler_id;
+    $f_category_id        = $t_bug->category_id;
     $f_reproducibility    = $t_bug->reproducibility;
-    $f_eta          = $t_bug->eta;
-    $f_severity       = $t_bug->severity;
-    $f_priority       = $t_bug->priority;
-    $f_summary        = $t_bug->summary;
-    $f_description      = $t_bug->description;
+    $f_eta                = $t_bug->eta;
+    $f_severity           = $t_bug->severity;
+    $f_priority           = $t_bug->priority;
+    $f_summary            = $t_bug->summary;
+    $f_description        = $t_bug->description;
     $f_steps_to_reproduce = $t_bug->steps_to_reproduce;
     $f_additional_info    = $t_bug->additional_information;
-    $f_view_state     = $t_bug->view_state;
-    $f_due_date       = $t_bug->due_date;
-
-    $t_project_id     = $t_bug->project_id;
-
+    $f_view_state         = $t_bug->view_state;
+    $f_due_date           = $t_bug->due_date;
+    $t_project_id         = $t_bug->project_id;
     $f_date_submitted = gpc_get_string( 'date_submitted', '');
     if ( $f_date_submitted == '' ) {
       $f_date_submitted = date_get_null();
     }
 
-} else {
+}
+else {
+
     # Get Project Id and set it as current
     $t_project_id = gpc_get_int( 'project_id', helper_get_current_project() );
-    if( ( ALL_PROJECTS == $t_project_id || project_exists( $t_project_id ) )
-     && $t_project_id != helper_get_current_project()
-    ) {
+    if( ( ALL_PROJECTS == $t_project_id || project_exists( $t_project_id ) ) && $t_project_id != helper_get_current_project() ) {
       helper_set_current_project( $t_project_id );
       # Reloading the page is required so that the project browser
       # reflects the new current project
       print_header_redirect( $_SERVER['REQUEST_URI'], true, false, true );
     }
-
     # New issues cannot be reported for the 'All Project' selection
     if ( ( ALL_PROJECTS == helper_get_current_project() ) ) {
       print_header_redirect( 'login_select_proj_page.php?ref=' . base64_encode('plugin.php?page=wbQuickReport/') );
     }
-
     access_ensure_project_level( config_get( 'report_bug_threshold' ) );
 
-    $f_build        = gpc_get_string( 'build', '' );
-    $f_platform       = gpc_get_string( 'platform', '' );
-    $f_os         = gpc_get_string( 'os', '' );
-    $f_os_build       = gpc_get_string( 'os_build', '' );
+    $f_build              = gpc_get_string( 'build', '' );
+    $f_platform           = gpc_get_string( 'platform', '' );
+    $f_os                 = gpc_get_string( 'os', '' );
+    $f_os_build           = gpc_get_string( 'os_build', '' );
     $f_product_version    = gpc_get_string( 'product_version', '' );
-    $f_target_version   = gpc_get_string( 'target_version', '' );
-    $f_profile_id     = gpc_get_int( 'profile_id', 0 );
-    $f_handler_id     = gpc_get_int( 'handler_id', 0 );
-
-    $f_status           = gpc_get_string( 'status', config_get( 'bug_submit_status' ) );
-
-    $f_category_id      = gpc_get_int( 'category_id', 4 );
+    $f_target_version     = gpc_get_string( 'target_version', '' );
+    $f_profile_id         = gpc_get_int( 'profile_id', 0 );
+    $f_handler_id         = gpc_get_int( 'handler_id', 0 );
+    $f_status             = gpc_get_string( 'status', config_get( 'bug_submit_status' ) );
+    $f_category_id        = gpc_get_int( 'category_id', 4 );
     $f_reproducibility    = gpc_get_int( 'reproducibility', config_get( 'default_bug_reproducibility' ) );
-    $f_eta          = gpc_get_int( 'eta', config_get( 'default_bug_eta' ) );
-    $f_severity       = gpc_get_int( 'severity', config_get( 'default_bug_severity' ) );
-    $f_priority       = gpc_get_int( 'priority', config_get( 'default_bug_priority' ) );
-    $f_summary        = gpc_get_string( 'summary', '' );
-    $f_description      = gpc_get_string( 'description', '' );
+    $f_eta                = gpc_get_int( 'eta', config_get( 'default_bug_eta' ) );
+    $f_severity           = gpc_get_int( 'severity', config_get( 'default_bug_severity' ) );
+    $f_priority           = gpc_get_int( 'priority', config_get( 'default_bug_priority' ) );
+    $f_summary            = gpc_get_string( 'summary', '' );
+    $f_description        = gpc_get_string( 'description', '' );
     $f_steps_to_reproduce = gpc_get_string( 'steps_to_reproduce', config_get( 'default_bug_steps_to_reproduce' ) );
     $f_additional_info    = gpc_get_string( 'additional_info', config_get ( 'default_bug_additional_info' ) );
-    $f_view_state     = gpc_get_int( 'view_state', config_get( 'default_bug_view_status' ) );
-
-    $f_date_submitted = gpc_get_string( 'date_submitted', '');
+    $f_view_state         = gpc_get_int( 'view_state', config_get( 'default_bug_view_status' ) );
+    $f_date_submitted     = gpc_get_string( 'date_submitted', '');
     if ( $f_date_submitted == '' ) {
       $f_date_submitted = date_get_null();
     }
-
     $f_due_date       = gpc_get_string( 'due_date', '');
     if ( $f_due_date == '' ) {
       $f_due_date = date_get_null();
     }
-
     $t_changed_project    = false;
+
   }
 
-  $f_report_stay                = gpc_get_bool( 'report_stay', false );
-  $f_copy_notes_from_parent         = gpc_get_bool( 'copy_notes_from_parent', false);
-  $f_copy_attachments_from_parent   = gpc_get_bool( 'copy_attachments_from_parent', false);
-
-  $t_fields = config_get( 'bug_report_page_fields' );
-  $t_fields = columns_filter_disabled( $t_fields );
-
-  $tpl_show_tags = access_has_global_level( config_get( 'tag_view_threshold' ) );
-  $tpl_can_attach_tag = $tpl_show_tags && access_has_global_level( config_get( 'tag_attach_threshold' ) );
-
-  $tpl_show_category = in_array( 'category_id', $t_fields );
-  $tpl_show_reproducibility = in_array( 'reproducibility', $t_fields );
-  $tpl_show_eta = in_array( 'eta', $t_fields );
-  $tpl_show_severity = in_array( 'severity', $t_fields );
-  $tpl_show_priority = in_array( 'priority', $t_fields );
-  $tpl_show_steps_to_reproduce = in_array( 'steps_to_reproduce', $t_fields );
-  $tpl_show_handler = in_array( 'handler', $t_fields ) && access_has_project_level( config_get( 'update_bug_assign_threshold' ) );
-  $tpl_show_profiles = config_get( 'enable_profiles' );
-  $tpl_show_platform = $tpl_show_profiles && in_array( 'platform', $t_fields );
-  $tpl_show_os = $tpl_show_profiles && in_array( 'os', $t_fields );
-  $tpl_show_os_version = $tpl_show_profiles && in_array( 'os_version', $t_fields );
-
-  $tpl_show_status = in_array('status', $t_fields) || access_has_project_level(config_get( 'update_bug_assign_threshold' ));
-  $tpl_show_resolution = in_array('resolution', $t_fields) || access_has_project_level(config_get( 'update_bug_assign_threshold' ));
-
-  $tpl_show_versions = version_should_show_product_version( $t_project_id );
-  $tpl_show_product_version = $tpl_show_versions && in_array( 'product_version', $t_fields );
-  $tpl_show_product_build = $tpl_show_versions && in_array( 'product_build', $t_fields ) && config_get( 'enable_product_build' ) == ON;
-  $tpl_show_target_version = $tpl_show_versions && in_array( 'target_version', $t_fields ) && access_has_project_level( config_get( 'roadmap_update_threshold' ) );
-  $tpl_show_additional_info = in_array( 'additional_info', $t_fields );
-  $tpl_show_due_date = in_array( 'due_date', $t_fields ) && access_has_project_level( config_get( 'due_date_update_threshold' ), helper_get_current_project(), auth_get_current_user_id() );
-  $tpl_show_attachments = in_array( 'attachments', $t_fields ) && file_allow_bug_upload();
-  $tpl_show_view_state = in_array( 'view_state', $t_fields ) && access_has_project_level( config_get( 'set_view_status_threshold' ) );
+  $f_report_stay                  = gpc_get_bool( 'report_stay', false );
+  $f_copy_notes_from_parent       = gpc_get_bool( 'copy_notes_from_parent', false);
+  $f_copy_attachments_from_parent = gpc_get_bool( 'copy_attachments_from_parent', false);
+  $t_fields                       = config_get( 'bug_report_page_fields' );
+  $t_fields                       = columns_filter_disabled( $t_fields );
+  $tpl_show_tags                  = access_has_global_level( config_get( 'tag_view_threshold' ) );
+  $tpl_can_attach_tag             = $tpl_show_tags && access_has_global_level( config_get( 'tag_attach_threshold' ) );
+  $tpl_show_category              = in_array( 'category_id', $t_fields );
+  $tpl_show_reproducibility       = in_array( 'reproducibility', $t_fields );
+  $tpl_show_eta                   = in_array( 'eta', $t_fields );
+  $tpl_show_severity              = in_array( 'severity', $t_fields );
+  $tpl_show_priority              = in_array( 'priority', $t_fields );
+  $tpl_show_steps_to_reproduce    = in_array( 'steps_to_reproduce', $t_fields );
+  $tpl_show_handler               = in_array( 'handler', $t_fields ) && access_has_project_level( config_get( 'update_bug_assign_threshold' ) );
+  $tpl_show_profiles              = config_get( 'enable_profiles' );
+  $tpl_show_platform              = $tpl_show_profiles && in_array( 'platform', $t_fields );
+  $tpl_show_os                    = $tpl_show_profiles && in_array( 'os', $t_fields );
+  $tpl_show_os_version            = $tpl_show_profiles && in_array( 'os_version', $t_fields );
+  $tpl_show_status                = in_array('status', $t_fields) || access_has_project_level(config_get( 'update_bug_assign_threshold' ));
+  $tpl_show_resolution            = in_array('resolution', $t_fields) || access_has_project_level(config_get( 'update_bug_assign_threshold' ));
+  $tpl_show_versions              = version_should_show_product_version( $t_project_id );
+  $tpl_show_product_version       = $tpl_show_versions && in_array( 'product_version', $t_fields );
+  $tpl_show_product_build         = $tpl_show_versions && in_array( 'product_build', $t_fields ) && config_get( 'enable_product_build' ) == ON;
+  $tpl_show_target_version        = $tpl_show_versions && in_array( 'target_version', $t_fields ) && access_has_project_level( config_get( 'roadmap_update_threshold' ) );
+  $tpl_show_additional_info       = in_array( 'additional_info', $t_fields );
+  $tpl_show_due_date              = in_array( 'due_date', $t_fields ) && access_has_project_level( config_get( 'due_date_update_threshold' ), helper_get_current_project(), auth_get_current_user_id() );
+  $tpl_show_attachments           = in_array( 'attachments', $t_fields ) && file_allow_bug_upload();
+  $tpl_show_view_state            = in_array( 'view_state', $t_fields ) && access_has_project_level( config_get( 'set_view_status_threshold' ) );
 
   # don't index bug report page  html_robots_noindex();
-
   html_page_top( lang_get( 'report_bug_link' ) );
-
   print_recently_visited();
+
 ?>
 <br />
 <div align="center" style="float:left;width:49%;position:relative;">

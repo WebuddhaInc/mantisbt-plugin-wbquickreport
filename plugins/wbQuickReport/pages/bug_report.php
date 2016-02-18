@@ -90,10 +90,6 @@
   if ( is_blank ( $t_bug_data->due_date ) ) {
     $t_bug_data->due_date = date_get_null();
   }
-  $t_bug_data->date_submitted         = gpc_get_string( 'date_submitted', '');
-  if ( is_blank ( $t_bug_data->date_submitted ) )
-    $t_bug_data->date_submitted = db_now();
-
   $f_files                            = gpc_get_file( 'ufile', null ); /** @todo (thraxisp) Note that this always returns a structure */
   $f_report_stay                      = gpc_get_bool( 'report_stay', true );
   $f_copy_notes_from_parent           = gpc_get_bool( 'copy_notes_from_parent', false);
@@ -154,6 +150,16 @@
   # Create the bug
   $t_bug_id = $t_bug_data->create();
 
+  # Force Dates
+  $f_date_submitted = gpc_get_string( 'date_submitted', '');
+  if( !is_blank($f_date_submitted) ){
+    $query = "
+      UPDATE ". db_get_table( 'mantis_bug_table' ) ."
+      SET date_submitted = '". strtotime($f_date_submitted) ."'
+      ";
+    db_query( $query );
+  }
+
   # Create the Tags
   $t_user_id = auth_get_current_user_id();
   if( access_has_global_level( config_get( 'tag_view_threshold' ) ) && access_has_global_level( config_get( 'tag_attach_threshold' ) ) ){
@@ -199,7 +205,6 @@
       $t_file['type']     = $f_files['type'][$i];
       $t_file['error']    = $f_files['error'][$i];
       $t_file['size']     = $f_files['size'][$i];
-
       file_add( $t_bug_id, $t_file, 'bug' );
     }
   }
@@ -220,7 +225,6 @@
 
   $f_master_bug_id = gpc_get_int( 'm_id', 0 );
   $f_rel_type = gpc_get_int( 'rel_type', -1 );
-
   if ( $f_master_bug_id > 0 ) {
     # it's a child generation... let's create the relationship and add some lines in the history
 
@@ -234,68 +238,52 @@
     if ( $f_rel_type >= 0 ) {
       # Add the relationship
       relationship_add( $t_bug_id, $f_master_bug_id, $f_rel_type );
-
       # Add log line to the history (both issues)
       history_log_event_special( $f_master_bug_id, BUG_ADD_RELATIONSHIP, relationship_get_complementary_type( $f_rel_type ), $t_bug_id );
       history_log_event_special( $t_bug_id, BUG_ADD_RELATIONSHIP, $f_rel_type, $f_master_bug_id );
-
       # update relationship target bug last updated
       bug_update_date( $t_bug_id );
-
       # Send the email notification
       email_relationship_added( $f_master_bug_id, $t_bug_id, relationship_get_complementary_type( $f_rel_type ) );
     }
 
     # copy notes from parent
     if ( $f_copy_notes_from_parent ) {
-
-        $t_parent_bugnotes = bugnote_get_all_bugnotes( $f_master_bug_id );
-
-        foreach ( $t_parent_bugnotes as $t_parent_bugnote ) {
-
-            $t_private = $t_parent_bugnote->view_state == VS_PRIVATE;
-
-            bugnote_add( $t_bug_id, $t_parent_bugnote->note, $t_parent_bugnote->time_tracking,
-                $t_private, $t_parent_bugnote->note_type, $t_parent_bugnote->note_attr,
-                $t_parent_bugnote->reporter_id, /* send_email */ FALSE , /* log history */ FALSE);
-        }
+      $t_parent_bugnotes = bugnote_get_all_bugnotes( $f_master_bug_id );
+      foreach ( $t_parent_bugnotes as $t_parent_bugnote ) {
+        $t_private = $t_parent_bugnote->view_state == VS_PRIVATE;
+        bugnote_add( $t_bug_id, $t_parent_bugnote->note, $t_parent_bugnote->time_tracking,
+            $t_private, $t_parent_bugnote->note_type, $t_parent_bugnote->note_attr,
+            $t_parent_bugnote->reporter_id, /* send_email */ FALSE , /* log history */ FALSE);
+      }
     }
-
     # copy attachments from parent
     if ( $f_copy_attachments_from_parent ) {
-            file_copy_attachments( $f_master_bug_id, $t_bug_id );
+      file_copy_attachments( $f_master_bug_id, $t_bug_id );
     }
   }
-
   helper_call_custom_function( 'issue_create_notify', array( $t_bug_id ) );
 
   # Allow plugins to post-process bug data with the new bug ID
   event_signal( 'EVENT_REPORT_BUG', array( $t_bug_data, $t_bug_id ) );
-
   email_new_bug( $t_bug_id );
-  // echo $t_bug_id;die();
 
   // log status and resolution changes if they differ from the default
   if ( $t_bug_data->status != config_get('bug_submit_status') )
     history_log_event($t_bug_id, 'status', config_get('bug_submit_status') );
-
   if ( $t_bug_data->resolution != config_get('default_bug_resolution') )
     history_log_event($t_bug_id, 'resolution', config_get('default_bug_resolution') );
-
-  // form_security_purge( 'bug_report' );
-
   if ( !$f_report_stay ) {
-
     if( $t_bug_data->status < config_get( 'bug_readonly_status_threshold' ) ){
       html_meta_redirect( 'view.php?id='.$t_bug_id);
-    } else {
+    }
+    else {
       bug_update_date( $t_bug_id, $t_bug_data->date_submitted );
       $t_category_table = db_get_table( 'mantis_category_table' );
       $result = db_query_bound("SELECT `name` FROM ".$t_category_table." WHERE `id` = ".db_param(),Array( $t_bug_data->category_id ));
       $row = db_fetch_array( $result );
       html_meta_redirect( 'browse.php?reset=true&category='.$row['name']);
     }
-
   }
 
 ?>

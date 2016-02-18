@@ -2,16 +2,20 @@
 
 /************************************************************************************************************************************
  *
- * wbTeamProTheme plugin for MantisBT
+ * wbQuickReport plugin for MantisBT
  * 2013 - David Hunt, Webuddha.com
  *
  ************************************************************************************************************************************/
 
 // Plugin
 
-  $s_plugin_wbquickreport_title = 'Bug Reporting Tools';
-  $s_plugin_wbquickreport_description = 'Tools to improve speed of batch bug reporting.';
-  $s_plugin_wbquickreport_header_config = 'Configuration';
+	$s_plugin_wbquickreport_title         = 'Bug Reporting Tools';
+	$s_plugin_wbquickreport_description   = 'Tools to improve speed of batch bug reporting.';
+	$s_plugin_wbquickreport_header_config = 'Configuration';
 
 // Core
 
+	$s_plugin_wbquickreport_select_obsolete_target_version   = 'Obsolete Target Version';
+	$s_plugin_wbquickreport_create_target_version            = 'Create Target Version';
+	$s_plugin_wbquickreport_select_obsolete_fixed_in_version = 'Obsolete Fixed in Version';
+	$s_plugin_wbquickreport_create_fixed_in_version          = 'Create Fixed in Version';
