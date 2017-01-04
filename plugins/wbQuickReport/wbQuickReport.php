@@ -215,12 +215,16 @@ class wbQuickReportPlugin extends MantisPlugin  {
       </tr>
       <script>
         var createQuickVersionToggle = function(){
-          document.querySelector('select[name=<?php echo $t_field; ?>]').onchange = function(){
-            document.getElementById('create_<?php echo $t_field; ?>').style.display = (this.value == '' ? 'table-row' : 'none');
-            document.getElementById('select_obsolete_<?php echo $t_field; ?>').style.display = (this.value == '' ? 'table-row' : 'none');
+          var isVisible = true;
+          if (document.querySelector('select[name=<?php echo $t_field; ?>]')) {
+            document.querySelector('select[name=<?php echo $t_field; ?>]').onchange = function(){
+              document.getElementById('create_<?php echo $t_field; ?>').style.display = (this.value == '' ? 'table-row' : 'none');
+              document.getElementById('select_obsolete_<?php echo $t_field; ?>').style.display = (this.value == '' ? 'table-row' : 'none');
+            }
+            isVisible = (document.querySelector('select[name=<?php echo $t_field; ?>]').value == '' ? true : false);
           }
-          document.getElementById('create_<?php echo $t_field; ?>').style.display = (document.querySelector('select[name=<?php echo $t_field; ?>]').value == '' ? 'table-row' : 'none');
-          document.getElementById('select_obsolete_<?php echo $t_field; ?>').style.display = (document.querySelector('select[name=<?php echo $t_field; ?>]').value == '' ? 'table-row' : 'none');
+          document.getElementById('create_<?php echo $t_field; ?>').style.display = (isVisible ? 'table-row' : 'none');
+          document.getElementById('select_obsolete_<?php echo $t_field; ?>').style.display = (isVisible ? 'table-row' : 'none');
         }
         (window.addEventListener
           ? window.addEventListener('load', createQuickVersionToggle, false)
